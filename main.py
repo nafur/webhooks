@@ -65,7 +65,8 @@ def verify_token(host, script, token):
 	return True
 
 def run_script(host, script):
-	subprocess.run(['ssh', '-o', 'StrictHostKeyChecking=no', '{}@{}'.format(config.SCRIPT_USER, host), script])
+	res = subprocess.run(['ssh', '-o', 'StrictHostKeyChecking=no', '{}@{}'.format(config.SCRIPT_USER, host), script], capture_output = True)
+	app.logger.info("Executed {}@{}:{} and got the following:\n{}".format(config.SCRIPT_USER, host, script, res.stdout))
 	return "Success!"
 
 @app.route('/github/<host>/<script>', methods = ['POST'])
