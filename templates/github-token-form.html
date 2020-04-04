@@ -3,6 +3,10 @@
 {% block content %}
 <form method="POST">
 	<div class="form-group">
+		<label for="input-repository">GitHub repository name</label>
+		<input type="text" class="form-control" id="input-repository" placeholder="user/repository" name="repository" />
+	</div>
+	<div class="form-group">
 		<label for="input-script">Execution host</label>
 		<input type="text" class="form-control" id="input-script" placeholder="Host name" name="host" />
 	</div>

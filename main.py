@@ -74,7 +74,7 @@ def github_run(host, script):
 	return "Token verification failed!"
 
 @app.route('/github/secret', methods = ['GET', 'POST'])
-@auth.login_required
+#@auth.login_required
 def github_token():
 	if request.method == 'GET':
 		return render_template('github-token-form.html')
