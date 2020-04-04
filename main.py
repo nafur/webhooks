@@ -1,12 +1,16 @@
 import ldap3
+import logging
 import os
 import os.path
 import subprocess
-import sys
 from syslog import *
 
 from flask import Flask, render_template, request
 app = Flask(__name__)
+
+logger = logging.getLogger('gunicorn.error')
+app.logger.handlers.extend(logger.handlers)
+app.logger.setLevel(logging.DEBUG)
 
 from flask_httpauth import HTTPBasicAuth
 auth = HTTPBasicAuth()
@@ -16,17 +20,14 @@ import config
 @auth.verify_password
 def ldap_login(username, password):
 	try:
-		ldapuser = 'uid={},{}'.format(username, config.LDAP_USERS)
+		ldapuser = 'uid={},{}'.format(username, config.LDAP_BASE_USERS)
 		server = ldap3.Server(config.LDAP_SERVER, use_ssl = True)
 		conn = ldap3.Connection(server, user = ldapuser, password = password, auto_bind = True)
-		conn.search(config.LDAP_GROUP_FILTER, search_filter = '(objectClass=groupOfNames)', search_scope = ldap3.SUBTREE, attributes = ['member'])
-		return ldapuser in conn.entries[0].member
+		conn.search(config.LDAP_GROUP_DN, search_filter = config.LDAP_GROUP_FILTER, search_scope = ldap3.SUBTREE, attributes = [config.LDAP_MEMBER_ATTRIBUTE])
+		return username in conn.entries[0].__getattr__(config.LDAP_MEMBER_ATTRIBUTE)
 	except Exception as e:
+		app.logger.error("LDAP authentication failed: {}".format(e))
 		return False
-
-setlogmask(LOG_UPTO(LOG_DEBUG))
-
-sys.stdout = sys.stderr
 
 # To generate a token
 # - Sign script path using the ssh private key
@@ -34,7 +35,7 @@ sys.stdout = sys.stderr
 def generate_token(host, script):
 	r = subprocess.run('openssl rsautl -sign -inkey .ssh/id_rsa | base64 -w0', input = "{}:{}".format(host, script), text = True, capture_output = True, shell = True, cwd = os.path.expanduser('~'))
 	if r.returncode != 0:
-		sys.stderr.print("Token generation failed")
+		app.logger.error("Token generation failed")
 		return False
 	return r.stdout.strip()
 
@@ -46,10 +47,10 @@ def generate_token(host, script):
 def verify_token(host, script, token):
 	r = subprocess.run('base64 -d | openssl rsautl -verify -inkey .ssh/id_rsa.pub.pem -pubin', input = token, text = True, capture_output = True, shell = True, cwd = os.path.expanduser('~'))
 	if r.returncode != 0:
-		sys.stderr.print("Token verification failed")
+		app.logger.error("Token verification failed")
 		return False
 	if r.stdout.strip() != "{}:{}".format(host, script):
-		sys.stderr.print("Incorrect token: {}:{} != {}".format(host, script, r.stdout.strip()))
+		app.logger.error("Incorrect token: {}:{} != {}".format(host, script, r.stdout.strip()))
 		return False
 	return True
 

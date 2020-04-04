@@ -1,8 +1,10 @@
 
 LDAP_SERVER = 'example.com'
 LDAP_BASE_DN = 'dc=example,=com'
-LDAP_USERS = 'ou=users,{}'.format(LDAP_BASE_DN)
-LDAP_GROUPS = 'ou=groups,{}'.format(LDAP_BASE_DN)
-LDAP_GROUP_FILTER = 'cn=admins,{}'.format(LDAP_GROUPS)
+LDAP_BASE_USERS = 'ou=users,{}'.format(LDAP_BASE_DN)
+LDAP_BASE_GROUPS = 'ou=groups,{}'.format(LDAP_BASE_DN)
+LDAP_GROUP_DN = 'cn=admins,{}'.format(LDAP_GROUPS)
+LDAP_GROUP_FILTER = '(objectClass=posixGroup)'
+LDAP_MEMBER_ATTRIBUTE = 'memberUid'
 
 SCRIPT_USER = 'webhooks'
