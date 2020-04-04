@@ -1,3 +1,4 @@
+import base64
 import hashlib
 import hmac
 import ldap3
@@ -18,6 +19,12 @@ from flask_httpauth import HTTPBasicAuth
 auth = HTTPBasicAuth()
 
 import config
+
+def encode_script(script):
+	return base64.b64encode(script.encode("utf8"), altchars = "+-").decode("utf8")
+
+def decode_script(script):
+	return base64.b64decode(script.encode("utf8"), altchars = "+-").decode("utf8")
 
 @auth.verify_password
 def ldap_login(username, password):
@@ -67,6 +74,7 @@ def github_run(host, script):
 		return "You did not pass a token"
 	payload = request.get_data(as_text = False)
 	data = request.get_json()
+	script = decode_script(script)
 	token = generate_token("{}@{}".format(data['repository']['full_name'], host), script)
 	signature = hmac.new(token.encode('utf8'), payload, hashlib.sha1).hexdigest()
 	if hmac.compare_digest(signature, request.headers['X-Hub-Signature'].split('=')[1]):
@@ -84,12 +92,13 @@ def github_token():
 	token = generate_token("{}@{}".format(repo, host), script)
 	if not token:
 		return "Token generation failed"
-	return render_template('github-token-success.html', token = token, host = host, script = script)
+	return render_template('github-token-success.html', token = token, host = host, script = encode_script(script))
 
 @app.route('/gitlab/<host>/<script>', methods = ['GET', 'POST'])
 def gitlab_run(host, script):
 	if 'X-Gitlab-Token' not in request.headers:
 		return "You did not pass a token"
+	script = decode_script(script)
 	if not verify_token(host, script, token):
 		return "Token verification failed"
 	return run_script(host, script)
@@ -104,7 +113,7 @@ def gitlab_token():
 	token = generate_token(host, script)
 	if not token:
 		return "Token generation failed"
-	return render_template('gitlab-token-success.html', token = token, host = host, script = script)
+	return render_template('gitlab-token-success.html', token = token, host = host, script = encode_script(script))
 
 @app.route('/')
 def index():
