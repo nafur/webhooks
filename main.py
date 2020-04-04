@@ -65,10 +65,10 @@ def run_script(host, script):
 def github_run(host, script):
 	if 'X-Hub-Signature' not in request.headers:
 		return "You did not pass a token"
-	payload = request.get_data(as_text = True)
+	payload = request.get_data(as_text = False)
 	data = request.get_json()
 	token = generate_token("{}@{}".format(data['repository']['full_name'], host), script)
-	signature = hmac.new(token, payload, hashlib.sha1).hexdigest()
+	signature = hmac.new(token.encode('utf8'), payload, hashlib.sha1).hexdigest()
 	if hmac.compare_digest(signature, request.headers['X-Hub-Signature'].split('=')[1]):
 		return run_script(host, script)
 	return "Token verification failed!"
