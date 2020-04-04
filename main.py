@@ -46,7 +46,6 @@ def generate_token(host, script):
 	if r.returncode != 0:
 		app.logger.error("Token generation failed")
 		return False
-	app.logger.info("Generated token {}".format(r.stdout.strip()))
 	return r.stdout.strip()
 
 # To verify:
