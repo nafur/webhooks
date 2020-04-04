@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+<form method="POST">
+	<div class="form-group">
+		<label for="input-script">Execution host</label>
+		<input type="text" class="form-control" id="input-script" placeholder="Host name" name="host" />
+	</div>
+	<div class="form-group">
+		<label for="input-script">Script name</label>
+		<input type="text" class="form-control" id="input-script" placeholder="Script name" name="script" />
+	</div>
+	<button type="submit" class="btn btn-primary">Get token</button>
+</form>
+{% endblock %}

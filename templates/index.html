@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card-columns">
+{% for r in routes %}
+	{% set d = data[r.endpoint] %}
+	{% if not d %}
+	<div class="card">
+		<div class="card-header">
+			<code>{{ r }}</code>
+		</div>
+		<div class="card-body">
+			<p class="card-text">No help available.</p>
+		</div>
+	</div>
+	{% elif not d.hide %}
+	<div class="card">
+		<div class="card-header">
+			<code>{{ r }}</code>
+			{% if d.link %}<a href="{{ r }}" class="float-right">go here</a>{% endif %}
+		</div>
+		<div class="card-body">
+			<h4 class="card-title">{{ d.title }}</h4>
+			<p class="card-text">{{ d.description }}</p>
+		</div>
+		{% if d.URL or d.GET or d.POST %}
+		<div class="card-footer">
+			<dl>
+				{% for arg in d.URL %}
+				<dt>URL: <code>{{ arg }}</code></dt>
+				<dd>{{ d.URL[arg]|safe }}</dd>
+				{% endfor %}
+				{% for arg in d.GET %}
+				<dt>GET: <code>{{ arg }}</code></dt>
+				<dd>{{ d.GET[arg]|safe }}</dd>
+				{% endfor %}
+				{% for arg in d.POST %}
+				<dt>POST: <code>{{ arg }}</code></dt>
+				<dd>{{ d.POST[arg]|safe }}</dd>
+				{% endfor %}
+			</dl>
+		</div>
+		{% endif %}
+	</div>
+	{% endif %}
+{% endfor %}
+</div>
+{% endblock %}
