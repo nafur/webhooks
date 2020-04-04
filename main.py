@@ -21,10 +21,10 @@ auth = HTTPBasicAuth()
 import config
 
 def encode_script(script):
-	return base64.b64encode(script.encode("utf8"), altchars = "+-").decode("utf8")
+	return base64.b64encode(script.encode("utf8"), altchars = b"+-").decode("utf8")
 
 def decode_script(script):
-	return base64.b64decode(script.encode("utf8"), altchars = "+-").decode("utf8")
+	return base64.b64decode(script.encode("utf8"), altchars = b"+-").decode("utf8")
 
 @auth.verify_password
 def ldap_login(username, password):
