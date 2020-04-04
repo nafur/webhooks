@@ -3,17 +3,14 @@
 {% block content %}
 <h4>The token was created successfully!</h4>
 
-Please use the following request to trigger this script:
+Please use any of the following requests to trigger this script:
 
-<h5 class="card-title"><code>/script/{{ host }}/{{ script|e }}</code></h5>
+<h5 class="card-title"><code>/gitlab/{{ host }}/{{ script|e }}</code></h5>
 
 <div class="input-group mb-3">
 	<div class="input-group-prepend">
-        	<span class="input-group-text">X-Gitlab-Token</span>
+		<span class="input-group-text">X-Gitlab-Token</span>
 	</div>
 	<textarea  class="form-control" disabled="disabled">{{ token }}</textarea>
-	<div class="input-group-append">
-		<span class="input-group-text">GET</span>
-	</div>
 </div>
 {% endblock %}
