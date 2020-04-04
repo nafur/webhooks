@@ -6,12 +6,12 @@ RUN		apt-get update && \
 		apt-get install -y python3-pip && \
 		pip3 install gunicorn Flask Flask-HTTPAuth Jinja2 ldap3
 
-ARG PGID
-ARG PUID
+ARG		PGID
+ARG		PUID
 
 RUN		PGID=${PGID:-1000} \
 		PUID=${PUID:-1000} \
-		groupadd -g "$PGID" webhooks \
+		groupadd -g "$PGID" webhooks && \
 		useradd -d /webhooks -g webhooks -m -u "$PUID" webhooks
 
 USER	webhooks:webhooks
