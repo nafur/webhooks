@@ -1,3 +1,5 @@
+import hashlib
+import hmac
 import ldap3
 import logging
 import os
@@ -37,6 +39,7 @@ def generate_token(host, script):
 	if r.returncode != 0:
 		app.logger.error("Token generation failed")
 		return False
+	app.logger.info("Generated token {}".format(r.stdout.strip()))
 	return r.stdout.strip()
 
 # To verify:
@@ -54,41 +57,82 @@ def verify_token(host, script, token):
 		return False
 	return True
 
-def script_run(host, script, token):
-	if not verify_token(host, script, token):
-		return "Token verification failed"
+def run_script(host, script):
 	subprocess.run(['ssh', '-o', 'StrictHostKeyChecking=no', '{}@{}'.format(config.SCRIPT_USER, host), script])
 	return "Success!"
-	
+
+@app.route('/github/<host>/<script>', methods = ['POST'])
+def github_run(host, script):
+	if 'X-Hub-Signature' not in request.headers:
+		return "You did not pass a token"
+	payload = request.get_data(as_text = True)
+	data = request.get_json()
+	token = generate_token("{}@{}".format(data['repository']['full_name'], host), script)
+	signature = hmac.new(token, payload, hashlib.sha1).hexdigest()
+	if hmac.compare_digest(signature, request.headers['X-Hub-Signature'].split('=')[1]):
+		return run_script(host, script)
+	return "Token verification failed!"
+
+@app.route('/github/secret', methods = ['GET', 'POST'])
+@auth.login_required
+def github_token():
+	if request.method == 'GET':
+		return render_template('github-token-form.html')
+	host = request.form.get('host')
+	repo = request.form.get('repository')
+	script = request.form.get('script')
+	token = generate_token("{}@{}".format(repo, host), script)
+	if not token:
+		return "Token generation failed"
+	return render_template('github-token-success.html', token = token, host = host, script = script)
+
 @app.route('/gitlab/<host>/<script>', methods = ['GET', 'POST'])
-def script_gitlab(host, script):
+def gitlab_run(host, script):
 	if 'X-Gitlab-Token' not in request.headers:
 		return "You did not pass a token"
-	return run_script(host, script, str(request.headers['X-Gitlab-Token']))
-	
-@app.route('/token', methods = ['GET', 'POST'])
+	if not verify_token(host, script, token):
+		return "Token verification failed"
+	return run_script(host, script)
+
+@app.route('/gitlab/token', methods = ['GET', 'POST'])
 @auth.login_required
-def token_generator():
+def gitlab_token():
 	if request.method == 'GET':
-		return render_template('script-token-form.html')
+		return render_template('gitlab-token-form.html')
 	host = request.form.get('host')
 	script = request.form.get('script')
 	token = generate_token(host, script)
 	if not token:
 		return "Token generation failed"
-	return render_template('script-token-success.html', token = token, host = host, script = script)
+	return render_template('gitlab-token-success.html', token = token, host = host, script = script)
 
 @app.route('/')
 def index():
 	data = {
 		'index': { 'hide': True },
 		'static': { 'hide': True },
-		'token_generator': {
-			'title': 'Token generation',
-			'description': 'Allows authorized users to generate new tokens that allow the execution of scripts.',
+		'github_token': {
+			'title': 'GitHub secret generation',
+			'description': 'Allows authorized users to generate new secrets that allow the execution of scripts via GitHub webhooks.',
 			'link': True,
 		},
-		'script_gitlab': {
+		'github_run': {
+			'title': 'GitHub endpoint',
+			'description': 'GitHub endpoint for webhooks that need to call custom scripts.',
+			'URL': {
+				'host': 'Hostname to execute the script on.',
+				'script': 'Filename of the script to be executed.',
+			},
+			'CUSTOM': {
+				'Secret': 'Secret as obtained by <code>/github/secret</code> for this script.',
+			}
+		},
+		'gitlab_token': {
+			'title': 'Gitlab token generation',
+			'description': 'Allows authorized users to generate new tokens that allow the execution of scripts via Gitlab webhooks.',
+			'link': True,
+		},
+		'gitlab_run': {
 			'title': 'Gitlab endpoint',
 			'description': 'Gitlab endpoint for webhooks that need to call custom scripts.',
 			'URL': {
@@ -96,8 +140,8 @@ def index():
 				'script': 'Filename of the script to be executed.',
 			},
 			'POST': {
-				'X-Gitlab-Token': 'Authorization token as obtained by <code>/token</code> for this script.',
+				'X-Gitlab-Token': 'Authorization token as obtained by <code>/gitlab/token</code> for this script.',
 			}
-		}
+		},
 	}
 	return render_template('index.html', data = data, routes = app.url_map.iter_rules())

@@ -23,7 +23,7 @@
 			<h4 class="card-title">{{ d.title }}</h4>
 			<p class="card-text">{{ d.description }}</p>
 		</div>
-		{% if d.URL or d.GET or d.POST %}
+		{% if d.URL or d.GET or d.POST or d.CUSTOM %}
 		<div class="card-footer">
 			<dl>
 				{% for arg in d.URL %}
@@ -37,6 +37,10 @@
 				{% for arg in d.POST %}
 				<dt>POST: <code>{{ arg }}</code></dt>
 				<dd>{{ d.POST[arg]|safe }}</dd>
+				{% endfor %}
+				{% for arg in d.CUSTOM %}
+				<dt><code>{{ arg }}</code></dt>
+				<dd>{{ d.CUSTOM[arg]|safe }}</dd>
 				{% endfor %}
 			</dl>
 		</div>
