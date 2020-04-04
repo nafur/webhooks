@@ -3,7 +3,7 @@ FROM	debian:buster-slim
 EXPOSE	10080
 
 RUN		apt-get update && \
-		apt-get install -y python3-pip && \
+		apt-get install -y python3-pip openssh-client && \
 		pip3 install gunicorn Flask Flask-HTTPAuth Jinja2 ldap3
 
 ARG		PGID
