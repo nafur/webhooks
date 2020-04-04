@@ -64,7 +64,7 @@ def verify_token(host, script, token):
 	return True
 
 def run_script(host, script):
-	res = subprocess.run(['ssh', '-o', 'StrictHostKeyChecking=no', '{}@{}'.format(config.SCRIPT_USER, host), script], capture_output = True)
+	res = subprocess.run(['ssh', '-o', 'StrictHostKeyChecking=no', '{}@{}'.format(config.SCRIPT_USER, host), "{} </dev/null &>/dev/null &".format(script)])
 	app.logger.info("Executed {}@{}:{} and got the following:\n{}".format(config.SCRIPT_USER, host, script, res.stdout))
 	return "Success!"
 
