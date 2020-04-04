@@ -49,12 +49,12 @@ def generate_token(host, script):
 	return r.stdout.strip()
 
 # To verify:
-# - Convert the ssh public key to a format compatible with openssl rsautl
-#   cd /var/lib/tomcat9/.ssh ; ssh-keygen -f id_rsa.pub -e -m PKCS8 > id_rsa.pub.pem
+# - Make sure the ssh key is in a format compatible with openssl rsautl (i.e. generated with -m PEM)
+#   You can also convert it as follows: ssh-keygen -f id_rsa.pub -e -m PEM > id_rsa.pub.pem
 # - Verify signature using the ssh public key
 #   echo "<token>" | base64 -d | openssl rsautl -verify -inkey ~/.ssh/id_rsa.pub.pem -pubin
 def verify_token(host, script, token):
-	r = subprocess.run('base64 -d | openssl rsautl -verify -inkey .ssh/id_rsa.pub.pem -pubin', input = token, text = True, capture_output = True, shell = True, cwd = os.path.expanduser('~'))
+	r = subprocess.run('base64 -d | openssl rsautl -verify -inkey .ssh/id_rsa.pub -pubin', input = token, text = True, capture_output = True, shell = True, cwd = os.path.expanduser('~'))
 	if r.returncode != 0:
 		app.logger.error("Token verification failed")
 		return False
