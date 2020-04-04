@@ -21,7 +21,7 @@ import config
 def ldap_login(username, password):
 	try:
 		ldapuser = 'uid={},{}'.format(username, config.LDAP_BASE_USERS)
-		server = ldap3.Server(config.LDAP_SERVER, use_ssl = True)
+		server = ldap3.Server(config.LDAP_SERVER, use_ssl = config.LDAP_USE_SSL)
 		conn = ldap3.Connection(server, user = ldapuser, password = password, auto_bind = True)
 		conn.search(config.LDAP_GROUP_DN, search_filter = config.LDAP_GROUP_FILTER, search_scope = ldap3.SUBTREE, attributes = [config.LDAP_MEMBER_ATTRIBUTE])
 		return username in conn.entries[0].__getattr__(config.LDAP_MEMBER_ATTRIBUTE)
